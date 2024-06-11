@@ -18,6 +18,32 @@ data = {
     "license_plate": "AAA-BBB",
 }
 
+data_invalid_null_field = {
+    "manufacturer": None,
+    "series_name": "M4",
+    "type_": "Convertible",
+    "is_electric": False,
+    "manufactured_date": "2023-01-01",
+    "base_msrp_usd": 93_300,
+    "vin": "1234567890",
+    "number_of_doors": 2,
+    "registration_country": "France",
+    "license_plate": "AAA-BBB",
+}
+
+data_valid_null_field = {
+    "manufacturer": "BMW",
+    "series_name": "M4",
+    "type_": "Convertible",
+    "is_electric": False,
+    "manufactured_date": "2023-01-01",
+    "base_msrp_usd": 93_300,
+    "vin": "1234567890",
+    "number_of_doors": 2,
+    "registration_country": None,
+    "license_plate": "AAA-BBB",
+}
+
 data_expected_serialization = {
     "manufacturer": "BMW",
     "series_name": "M4",
@@ -28,6 +54,19 @@ data_expected_serialization = {
     "vin": "1234567890",
     "number_of_doors": 2,
     "registration_country": "France",
+    "license_plate": "AAA-BBB",
+}
+
+data_expected_serialization_null_field = {
+    "manufacturer": "BMW",
+    "series_name": "M4",
+    "type_": AutomobileType.convertible,
+    "is_electric": False,
+    "manufactured_date": date(2023, 1, 1),
+    "base_msrp_usd": 93_300.0,
+    "vin": "1234567890",
+    "number_of_doors": 2,
+    "registration_country": None,
     "license_plate": "AAA-BBB",
 }
 
@@ -82,6 +121,17 @@ def test_automobile_data_serialization():
     automobile = Automobile.model_validate(data)
     assert automobile is not None
     assert automobile.model_dump() == data_expected_serialization
+
+
+def test_invalid_null_field_raises_validation_error():
+    with pytest.raises(ValidationError):
+        Automobile.model_validate(data_invalid_null_field)
+
+
+def test_valid_null_field_serialization():
+    automobile = Automobile.model_validate(data_valid_null_field)
+    assert automobile is not None
+    assert automobile.model_dump() == data_expected_serialization_null_field
 
 
 def test_auto_data_json_serialization():
