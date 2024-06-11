@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "pydantic-fun2"
+version = "0.1.0"
+description = "The project that comes along with the pydantic course"
+authors = ["Chris Dunphy <chris@megaparsec.ca>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.7.3"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.4.8"
+pytest = "^8.2.2"
+mypy = "^1.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+exclude = [".venv", "build", "dist"]
+venvPath = "."
+venv = ".venv"
