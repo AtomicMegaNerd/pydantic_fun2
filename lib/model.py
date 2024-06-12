@@ -5,7 +5,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    FieldSerializationInfo,
     field_serializer,
 )
 from pydantic.alias_generators import to_camel
@@ -37,16 +36,14 @@ class Automobile(BaseModel):
     type_: AutomobileType = Field(alias="type", serialization_alias="type")
     is_electric: bool = False
     manufactured_date: date = Field(validation_alias="completionDate")
-    base_msrp_usd: float = Field(alias="msrpUSD", serialization_alias="baseMSRPUSD")
+    base_msrp_usd: float = Field(
+        validation_alias="msrpUSD", serialization_alias="baseMSRPUSD"
+    )
     vin: str
     number_of_doors: int = Field(default=4, validation_alias="doors")
     registration_country: str | None = None
     license_plate: str | None = None
 
-    @field_serializer("manufactured_date", when_used="always")
-    def serialze_manufactured_date(
-        self, value: date, info: FieldSerializationInfo
-    ) -> str | date:
-        if info.mode_is_json():
-            return value.strftime("%Y/%m/%d")
-        return value
+    @field_serializer("manufactured_date", when_used="json-unless-none")
+    def serialze_manufactured_date(self, value: date) -> str:
+        return value.strftime("%Y/%m/%d")
