@@ -1,6 +1,14 @@
-from enum import Enum
-from pydantic import BaseModel, ConfigDict
 from datetime import date
+from enum import Enum
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    FieldSerializationInfo,
+    field_serializer,
+)
+from pydantic.alias_generators import to_camel
 
 
 class AutomobileType(Enum):
@@ -21,15 +29,24 @@ class Automobile(BaseModel):
         validate_default=True,
         validate_assignment=True,
         str_strip_whitespace=True,
+        alias_generator=to_camel,
     )
 
     manufacturer: str
     series_name: str
-    type_: AutomobileType
+    type_: AutomobileType = Field(alias="type", serialization_alias="type")
     is_electric: bool = False
-    manufactured_date: date
-    base_msrp_usd: float
+    manufactured_date: date = Field(validation_alias="completionDate")
+    base_msrp_usd: float = Field(alias="msrpUSD", serialization_alias="baseMSRPUSD")
     vin: str
-    number_of_doors: int = 4
+    number_of_doors: int = Field(default=4, validation_alias="doors")
     registration_country: str | None = None
     license_plate: str | None = None
+
+    @field_serializer("manufactured_date", when_used="always")
+    def serialze_manufactured_date(
+        self, value: date, info: FieldSerializationInfo
+    ) -> str | date:
+        if info.mode_is_json():
+            return value.strftime("%Y/%m/%d")
+        return value
