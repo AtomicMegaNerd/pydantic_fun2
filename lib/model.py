@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from uuid import uuid4
 
 from pydantic import (
     UUID4,
@@ -32,18 +33,23 @@ class Automobile(BaseModel):
         alias_generator=to_camel,
     )
 
-    id_: UUID4 | None = Field(alias="id", default=None)
+    id_: UUID4 = Field(alias="id", default_factory=uuid4)
 
     manufacturer: str
     series_name: str
     type_: AutomobileType = Field(alias="type", serialization_alias="type")
     is_electric: bool = False
-    manufactured_date: date = Field(validation_alias="completionDate")
+    manufactured_date: date = Field(
+        validation_alias="completionDate",
+        ge=date(1980, 1, 1),  # type: ignore
+    )
     base_msrp_usd: float = Field(
         validation_alias="msrpUSD", serialization_alias="baseMSRPUSD"
     )
     vin: str
-    number_of_doors: int = Field(default=4, validation_alias="doors")
+    number_of_doors: int = Field(
+        ge=2, le=4, default=4, multiple_of=2, validation_alias="doors"
+    )
     registration_country: str | None = None
     license_plate: str | None = None
 
