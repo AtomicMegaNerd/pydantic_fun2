@@ -2,6 +2,7 @@ from datetime import date
 from enum import Enum
 
 from pydantic import (
+    UUID4,
     BaseModel,
     ConfigDict,
     Field,
@@ -30,6 +31,8 @@ class Automobile(BaseModel):
         str_strip_whitespace=True,
         alias_generator=to_camel,
     )
+
+    id_: UUID4 | None = Field(alias="id", default=None)
 
     manufacturer: str
     series_name: str
