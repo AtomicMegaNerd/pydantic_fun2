@@ -1,6 +1,8 @@
 from datetime import date
 from enum import Enum
+from typing import Annotated, TypeVar
 from uuid import uuid4
+
 
 from pydantic import (
     UUID4,
@@ -10,6 +12,10 @@ from pydantic import (
     field_serializer,
 )
 from pydantic.alias_generators import to_camel
+
+T = TypeVar("T")
+BoundedList = Annotated[list[T], Field(min_length=1, max_length=5)]
+BoundedString = Annotated[str, Field(min_length=2, max_length=50)]
 
 
 class AutomobileType(Enum):
@@ -35,8 +41,8 @@ class Automobile(BaseModel):
 
     id_: UUID4 = Field(alias="id", default_factory=uuid4)
 
-    manufacturer: str
-    series_name: str
+    manufacturer: BoundedString
+    series_name: BoundedString
     type_: AutomobileType = Field(alias="type", serialization_alias="type")
     is_electric: bool = False
     manufactured_date: date = Field(
@@ -46,12 +52,15 @@ class Automobile(BaseModel):
     base_msrp_usd: float = Field(
         validation_alias="msrpUSD", serialization_alias="baseMSRPUSD"
     )
-    vin: str
+    top_features: BoundedList[BoundedString] | None = Field(
+        default=None, alias="topFeatures", serialization_alias="topFeatures"
+    )
+    vin: BoundedString
     number_of_doors: int = Field(
         ge=2, le=4, default=4, multiple_of=2, validation_alias="doors"
     )
-    registration_country: str | None = None
-    license_plate: str | None = None
+    registration_country: BoundedString | None = None
+    license_plate: BoundedString | None = None
 
     @field_serializer("manufactured_date", when_used="json-unless-none")
     def serialze_manufactured_date(self, value: date) -> str:
