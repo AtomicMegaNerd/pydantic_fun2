@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from functools import cached_property
 from typing import Annotated, Tuple, TypeVar
 from uuid import uuid4
 
@@ -11,6 +12,7 @@ from pydantic import (
     ConfigDict,
     Field,
     ValidationInfo,
+    computed_field,
     field_serializer,
     field_validator,
 )
@@ -51,7 +53,6 @@ def validate_registration_country(value: str) -> Tuple[str, str]:
 T = TypeVar("T")
 BoundedList = Annotated[list[T], Field(min_length=1, max_length=5)]
 BoundedString = Annotated[str, Field(min_length=2, max_length=50)]
-
 Country = Annotated[
     str, AfterValidator(lambda name: validate_registration_country(name)[0])
 ]
@@ -116,3 +117,8 @@ class Automobile(BaseModel):
     )
     def serialze_manufactured_date(self, value: date) -> str:
         return value.strftime("%Y/%m/%d")
+
+    @computed_field
+    @cached_property
+    def registration_country_code(self) -> str:
+        return validate_registration_country(self.registration_country)[1]
