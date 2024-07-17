@@ -41,7 +41,7 @@ countries: dict[str, Tuple[str, str]] = {
 
 
 def validate_registration_country(value: str) -> Tuple[str, str]:
-    key: str = value.lower().strip()
+    key: str = value.strip().casefold()
     try:
         return countries[key]
     except KeyError:
@@ -99,11 +99,7 @@ class Automobile(BaseModel):
         ge=2, le=4, default=4, multiple_of=2, validation_alias="doors"
     )
     registration_country: Country
-    registration_date: date | None = Field(
-        default=None,
-        serialization_alias="registrationDate",
-        validation_alias="registrationDate",
-    )
+    registration_date: date | None = None
     license_plate: BoundedString | None = None
 
     @field_validator("registration_date")
@@ -114,6 +110,7 @@ class Automobile(BaseModel):
             raise ValueError("registration_date must be after manufactured_date")
         return value
 
+    # Note we can use the same function for multiple fields
     @field_serializer(
         "manufactured_date", "registration_date", when_used="json-unless-none"
     )
