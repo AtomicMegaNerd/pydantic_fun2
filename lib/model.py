@@ -1,21 +1,60 @@
 from datetime import date
 from enum import Enum
-from typing import Annotated, TypeVar
+from typing import Annotated, Tuple, TypeVar
 from uuid import uuid4
 
 
 from pydantic import (
     UUID4,
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
+    ValidationInfo,
     field_serializer,
+    field_validator,
 )
 from pydantic.alias_generators import to_camel
+
+countries: dict[str, Tuple[str, str]] = {
+    "australia": ("Australia", "AUS"),
+    "canada": ("Canada", "CAN"),
+    "china": ("China", "CHN"),
+    "france": ("France", "FRA"),
+    "germany": ("Germany", "DEU"),
+    "india": ("India", "IND"),
+    "mexico": ("Mexico", "MEX"),
+    "norway": ("Norway", "NOR"),
+    "pakistan": ("Pakistan", "PAK"),
+    "san marino": ("San Marino", "SMR"),
+    "sanmarino": ("San Marino", "SMR"),
+    "spain": ("Spain", "ESP"),
+    "sweden": ("Sweden", "SWE"),
+    "united kingdom": ("United Kingdom", "GBR"),
+    "uk": ("United Kingdom", "GBR"),
+    "great britain": ("United Kingdom", "GBR"),
+    "britain": ("United Kingdom", "GBR"),
+    "us": ("United States of America", "USA"),
+    "united states": ("United States of America", "USA"),
+    "usa": ("United States of America", "USA"),
+}
+
+
+def validate_registration_country(value: str) -> Tuple[str, str]:
+    key: str = value.lower().strip()
+    try:
+        return countries[key]
+    except KeyError:
+        raise ValueError(f"Invalid country: {value}")
+
 
 T = TypeVar("T")
 BoundedList = Annotated[list[T], Field(min_length=1, max_length=5)]
 BoundedString = Annotated[str, Field(min_length=2, max_length=50)]
+
+Country = Annotated[
+    str, AfterValidator(lambda name: validate_registration_country(name)[0])
+]
 
 
 class AutomobileType(Enum):
@@ -59,9 +98,24 @@ class Automobile(BaseModel):
     number_of_doors: int = Field(
         ge=2, le=4, default=4, multiple_of=2, validation_alias="doors"
     )
-    registration_country: BoundedString | None = None
+    registration_country: Country
+    registration_date: date | None = Field(
+        default=None,
+        serialization_alias="registrationDate",
+        validation_alias="registrationDate",
+    )
     license_plate: BoundedString | None = None
 
-    @field_serializer("manufactured_date", when_used="json-unless-none")
+    @field_validator("registration_date")
+    @classmethod
+    def validate_registration_date(cls, value: date, values: ValidationInfo) -> date:
+        data = values.data
+        if "manufactured_date" in data and value < data["manufactured_date"]:
+            raise ValueError("registration_date must be after manufactured_date")
+        return value
+
+    @field_serializer(
+        "manufactured_date", "registration_date", when_used="json-unless-none"
+    )
     def serialze_manufactured_date(self, value: date) -> str:
         return value.strftime("%Y/%m/%d")
