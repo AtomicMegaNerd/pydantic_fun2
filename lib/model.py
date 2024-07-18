@@ -69,6 +69,9 @@ class Automobile(BaseModel):
     This is a pydantic model that represents an automobile.
     """
 
+    # Model configuration
+    # ------------------------------------------------------------
+
     model_config = ConfigDict(
         extra="forbid",
         validate_default=True,
@@ -77,11 +80,16 @@ class Automobile(BaseModel):
         alias_generator=to_camel,
     )
 
+    # Properties
+    # ------------------------------------------------------------
+
+    # These four properties show up in repr
     id_: UUID4 = Field(alias="id", default_factory=uuid4)
     manufacturer: BoundedString
     series_name: BoundedString
     type_: AutomobileType = Field(alias="type", serialization_alias="type")
 
+    # The rest of the properties are hidden from repr
     is_electric: bool = Field(default=False, repr=False)
     manufactured_date: date = Field(
         validation_alias="completionDate",
@@ -110,6 +118,9 @@ class Automobile(BaseModel):
     registration_date: date | None = Field(default=None, repr=False)
     license_plate: BoundedString | None = Field(default=None, repr=False)
 
+    # Validators
+    # ------------------------------------------------------------
+
     @field_validator("registration_date")
     @classmethod
     def validate_registration_date(cls, value: date, values: ValidationInfo) -> date:
@@ -117,6 +128,9 @@ class Automobile(BaseModel):
         if "manufactured_date" in data and value < data["manufactured_date"]:
             raise ValueError("registration_date must be after manufactured_date")
         return value
+
+    # Serializers
+    # ------------------------------------------------------------
 
     # Note we can use the same function for multiple fields
     @field_serializer(
