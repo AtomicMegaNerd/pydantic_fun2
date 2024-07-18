@@ -42,7 +42,7 @@ countries: dict[str, Tuple[str, str]] = {
 }
 
 
-def validate_registration_country(value: str) -> Tuple[str, str]:
+def validate_country(value: str) -> Tuple[str, str]:
     key: str = value.strip().casefold()
     try:
         return countries[key]
@@ -53,9 +53,7 @@ def validate_registration_country(value: str) -> Tuple[str, str]:
 T = TypeVar("T")
 BoundedList = Annotated[list[T], Field(min_length=1, max_length=5)]
 BoundedString = Annotated[str, Field(min_length=2, max_length=50)]
-Country = Annotated[
-    str, AfterValidator(lambda name: validate_registration_country(name)[0])
-]
+Country = Annotated[str, AfterValidator(lambda name: validate_country(name)[0])]
 
 
 class AutomobileType(Enum):
@@ -80,28 +78,37 @@ class Automobile(BaseModel):
     )
 
     id_: UUID4 = Field(alias="id", default_factory=uuid4)
-
     manufacturer: BoundedString
     series_name: BoundedString
     type_: AutomobileType = Field(alias="type", serialization_alias="type")
-    is_electric: bool = False
+
+    is_electric: bool = Field(default=False, repr=False)
     manufactured_date: date = Field(
         validation_alias="completionDate",
         ge=date(1980, 1, 1),  # type: ignore
+        repr=False,
     )
     base_msrp_usd: float = Field(
-        validation_alias="msrpUSD", serialization_alias="baseMSRPUSD"
+        validation_alias="msrpUSD", serialization_alias="baseMSRPUSD", repr=False
     )
     top_features: BoundedList[BoundedString] | None = Field(
-        default=None, alias="topFeatures", serialization_alias="topFeatures"
+        default=None, alias="topFeatures", serialization_alias="topFeatures", repr=False
     )
-    vin: BoundedString
+    vin: BoundedString = Field(repr=False)
     number_of_doors: int = Field(
-        ge=2, le=4, default=4, multiple_of=2, validation_alias="doors"
+        ge=2, le=4, default=4, multiple_of=2, validation_alias="doors", repr=False
     )
-    registration_country: Country
-    registration_date: date | None = None
-    license_plate: BoundedString | None = None
+
+    @computed_field(repr=False)
+    @cached_property
+    def registration_country_code(self) -> str:
+        # This is a dictionary comprehension that creates a lookup table
+        country_code_lookup = {name: code for (name, code) in countries.values()}
+        return country_code_lookup[self.registration_country]
+
+    registration_country: Country = Field(repr=False)
+    registration_date: date | None = Field(default=None, repr=False)
+    license_plate: BoundedString | None = Field(default=None, repr=False)
 
     @field_validator("registration_date")
     @classmethod
@@ -117,8 +124,3 @@ class Automobile(BaseModel):
     )
     def serialze_manufactured_date(self, value: date) -> str:
         return value.strftime("%Y/%m/%d")
-
-    @computed_field
-    @cached_property
-    def registration_country_code(self) -> str:
-        return validate_registration_country(self.registration_country)[1]
