@@ -113,6 +113,7 @@ class Automobile(BaseModel):
     number_of_doors: int = Field(
         ge=2, le=4, default=4, multiple_of=2, validation_alias="doors", repr=False
     )
+    registration_country: Country = Field(repr=False)
 
     @computed_field(repr=False)
     @cached_property
@@ -121,7 +122,6 @@ class Automobile(BaseModel):
         country_code_lookup = {name: code for (name, code) in countries.values()}
         return country_code_lookup[self.registration_country]
 
-    registration_country: Country = Field(repr=False)
     registration_date: CustomDate | None = Field(default=None, repr=False)
     license_plate: BoundedString | None = Field(default=None, repr=False)
 
