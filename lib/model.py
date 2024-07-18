@@ -11,9 +11,9 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    PlainSerializer,
     ValidationInfo,
     computed_field,
-    field_serializer,
     field_validator,
 )
 from pydantic.alias_generators import to_camel
@@ -50,10 +50,17 @@ def validate_country(value: str) -> Tuple[str, str]:
         raise ValueError(f"Invalid country: {value}")
 
 
+def serialize_date(value: date) -> str:
+    return value.strftime("%Y/%m/%d")
+
+
 T = TypeVar("T")
 BoundedList = Annotated[list[T], Field(min_length=1, max_length=5)]
 BoundedString = Annotated[str, Field(min_length=2, max_length=50)]
 Country = Annotated[str, AfterValidator(lambda name: validate_country(name)[0])]
+CustomDate = Annotated[
+    date, PlainSerializer(serialize_date, when_used="json-unless-none")
+]
 
 
 class AutomobileType(Enum):
@@ -91,7 +98,7 @@ class Automobile(BaseModel):
 
     # The rest of the properties are hidden from repr
     is_electric: bool = Field(default=False, repr=False)
-    manufactured_date: date = Field(
+    manufactured_date: CustomDate = Field(
         validation_alias="completionDate",
         ge=date(1980, 1, 1),  # type: ignore
         repr=False,
@@ -115,7 +122,7 @@ class Automobile(BaseModel):
         return country_code_lookup[self.registration_country]
 
     registration_country: Country = Field(repr=False)
-    registration_date: date | None = Field(default=None, repr=False)
+    registration_date: CustomDate | None = Field(default=None, repr=False)
     license_plate: BoundedString | None = Field(default=None, repr=False)
 
     # Validators
@@ -128,13 +135,3 @@ class Automobile(BaseModel):
         if "manufactured_date" in data and value < data["manufactured_date"]:
             raise ValueError("registration_date must be after manufactured_date")
         return value
-
-    # Serializers
-    # ------------------------------------------------------------
-
-    # Note we can use the same function for multiple fields
-    @field_serializer(
-        "manufactured_date", "registration_date", when_used="json-unless-none"
-    )
-    def serialze_manufactured_date(self, value: date) -> str:
-        return value.strftime("%Y/%m/%d")
