@@ -10,7 +10,7 @@ python = "^3.12"
 pydantic = "^2.7.3"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.4.8"
+ruff = "^0.5.3"
 pytest = "^8.2.2"
 mypy = "^1.10.0"
 
