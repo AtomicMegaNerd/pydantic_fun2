@@ -1,22 +1,22 @@
-[tool.poetry]
+[project]
 name = "pydantic-fun2"
 version = "0.1.0"
 description = "The project that comes along with the pydantic course"
-authors = ["Chris Dunphy <chris@megaparsec.ca>"]
+authors = [{ name = "Chris Dunphy", email = "chris@megaparsec.ca" }]
+requires-python = "~=3.12"
 readme = "README.md"
+dependencies = ["pydantic>=2.7.3,<3"]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-pydantic = "^2.7.3"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.3"
-pytest = "^8.2.2"
-mypy = "^1.10.0"
+[dependency-groups]
+dev = [
+    "ruff>=0.5.3,<0.6",
+    "pytest>=8.2.2,<9",
+    "mypy>=1.10.0,<2",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pyright]
 exclude = [".venv", "build", "dist"]
