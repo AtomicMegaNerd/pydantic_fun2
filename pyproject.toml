@@ -3,20 +3,27 @@ name = "pydantic-fun2"
 version = "0.1.0"
 description = "The project that comes along with the pydantic course"
 authors = [{ name = "Chris Dunphy", email = "chris@megaparsec.ca" }]
-requires-python = "~=3.12"
+requires-python = "~=3.13"
 readme = "README.md"
-dependencies = ["pydantic>=2.7.3,<3"]
+dependencies = ["pydantic==2.11.3"]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.5.3,<0.6",
-    "pytest>=8.2.2,<9",
-    "mypy>=1.10.0,<2",
+    "ruff==0.11.4",
+    "pytest==8.3.5",
+    "mypy==1.15.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["lib"]
+
+[tool.hatch.build.targets.wheel]
+include = ["lib"]
+
 
 [tool.pyright]
 exclude = [".venv", "build", "dist"]
